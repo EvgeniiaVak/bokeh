@@ -343,6 +343,17 @@ export abstract class HasProps extends Signalable() implements Equatable, Printa
     return cloner.clone(this)
   }
 
+  private _watchers: WeakMap<object, boolean> = new WeakMap()
+
+  changed_for(obj: object): boolean {
+    if (this._watchers.has(obj)) {
+      const changed = this._watchers.get(obj)!
+      this._watchers.set(obj, false)
+      return changed
+    } else
+      return true
+  }
+
   private _pending: boolean = false
   private _changing: boolean = false
 
@@ -364,8 +375,10 @@ export abstract class HasProps extends Signalable() implements Equatable, Printa
     }
 
     // Trigger all relevant attribute changes.
-    if (changed.length > 0)
+    if (changed.length > 0) {
+      this._watchers = new WeakMap()
       this._pending = true
+    }
     for (const prop of changed) {
       prop.change.emit()
     }
